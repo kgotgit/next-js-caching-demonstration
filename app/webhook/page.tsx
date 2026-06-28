@@ -105,6 +105,60 @@ export default function WebhookDemo() {
 
       <section className="flex flex-col gap-4">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          What if the background refresh fails?
+        </h2>
+        <div className="rounded-xl border border-border bg-card p-5">
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            The behavior on a failed regeneration is the key reason to prefer{' '}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs text-card-foreground">
+              &apos;max&apos;
+            </code>{' '}
+            for most webhooks. Marking a tag stale never deletes the entry, so a
+            failed refresh degrades to stale content rather than an error.
+          </p>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-lg border border-cached/40 bg-cached/5 p-4">
+              <p className="font-mono text-xs font-semibold text-cached">
+                &apos;max&apos; — stale-while-revalidate
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                The stale entry stays in the cache and{' '}
+                <span className="text-card-foreground">keeps being served</span>{' '}
+                while the background fetch retries on later requests. Users never
+                see the failure — the worst case is{' '}
+                <span className="text-card-foreground">prolonged staleness</span>,
+                not an outage.
+              </p>
+            </div>
+            <div className="rounded-lg border border-live/40 bg-live/5 p-4">
+              <p className="font-mono text-xs font-semibold text-live-foreground">
+                {'{ expire: 0 }'} — immediate
+              </p>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                The entry is genuinely expired, so there is{' '}
+                <span className="text-card-foreground">no stale copy to fall back on</span>.
+                The next request blocks on a fresh render, and a failure there can{' '}
+                <span className="text-card-foreground">surface as an error</span>{' '}
+                to that visitor.
+              </p>
+            </div>
+          </div>
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+            One caveat: &quot;serve stale on failure&quot; only holds while the
+            entry is within its{' '}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
+              cacheLife
+            </code>{' '}
+            <span className="text-card-foreground">expire</span> ceiling. Past the
+            hard <span className="text-card-foreground">expire</span> boundary the
+            entry is no longer eligible to be served stale, and the next request
+            becomes a blocking regeneration where a failure would be visible.
+          </p>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
           Call it like an external service
         </h2>
         <CodeBlock
