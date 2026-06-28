@@ -99,6 +99,34 @@ The logging cache handler (`cache-handlers/`) wraps Next.js's real
 and only *adds* logging. In production you would swap the wrapped store for
 Redis/DynamoDB for true cross-deployment durability.
 
+### Visualizing the cache entries themselves
+
+Alongside the `HIT/MISS/WRITE` one-liners, the handler dumps what each entry
+actually contains on every read and write:
+
+```
+[v0] cacheHandler:default — L2 ENTRY (HIT) key=…
+        tags=[page-level] created=2026-… stale=300s revalidate=86400s expire=604800s
+[v0] cacheHandler:default — L2 VALUE (HIT) key=… ~19075 bytes (RSC/Flight payload)
+        ":N1782…\n2:[[\"PageLevelDemo\",…   …(truncated)
+```
+
+- **`L2 ENTRY`** prints the metadata: `tags`, creation time, and the three
+  `cacheLife` thresholds (`stale` / `revalidate` / `expire`, in seconds).
+- **`L2 VALUE`** prints the byte size and a capped preview of the serialized
+  RSC/Flight payload — the actual bytes stored in L2.
+
+Implementation note: the entry's `value` is a one-shot `ReadableStream`, so the
+handler **tees** it — one copy goes to the real consumer, the other is read
+(capped at 16 KB) only for the preview. This never blocks or drains the stream
+the page depends on. Set `CACHE_LOG_ENTRIES=0` to silence these dumps and keep
+only the one-liners.
+
+> Caveat: Next.js loads `cacheHandler` modules **once at server startup** and
+> does not hot-reload them. After editing anything in `cache-handlers/`, restart
+> the dev server (`next dev`) or rebuild — a hot reload alone will keep running
+> the old handler.
+
 ### Observation: the `POST` → `GET` pattern in the logs (not a bug)
 
 When you interact with the currency switcher (`/remote`), the name picker
