@@ -99,6 +99,32 @@ The logging cache handler (`cache-handlers/`) wraps Next.js's real
 and only *adds* logging. In production you would swap the wrapped store for
 Redis/DynamoDB for true cross-deployment durability.
 
+### Observation: the `POST` → `GET` pattern in the logs (not a bug)
+
+When you interact with the currency switcher (`/remote`), the name picker
+(`/private`), "Revalidate now" (`/isr`), or the webhook trigger, you will see a
+`POST` to the current route immediately followed by a `GET` (often
+`?_rsc=…`). **This is expected** — it is the normal Server Action lifecycle, not
+a redirect loop or a misconfiguration.
+
+- A Server Action (`'use server'`) compiles to a reference that **POSTs back to
+  the same route**, carrying a `Next-Action: <id>` header. That `POST` is the
+  action *executing* — it is not a page load.
+- After the action runs, the router needs fresh UI, so what follows depends on
+  what the action did:
+
+| What you see | Why |
+|---|---|
+| `POST /route` + `Next-Action` header | The Server Action firing |
+| The **POST response itself is an RSC/Flight stream** (no separate GET) | A re-render was bundled in — happens when the action sets a **cookie**, or calls `updateTag` / `revalidatePath` / `refresh` / `redirect`. This is why `/remote` and `/private` (which set cookies) refresh in place. |
+| A following **`GET /route?_rsc=…`** | The router fetching fresh RSC on a *later* read — typical after a `revalidateTag` with the **SWR (`'max'`) profile**, which deliberately does **not** bundle a re-render into the action response. |
+| A `GET` of a **different** route after the `POST` | The action called `redirect()`. |
+
+> Rule of thumb: `POST` = the action ran; the trailing `GET`/RSC fetch = the
+> router reconciling the UI afterward. Cookie-setting and immediate-invalidation
+> actions re-render *inside* the POST response; `'max'` (SWR) defers the refresh
+> to a subsequent GET.
+
 ---
 
 ## Cache tags (for manual invalidation)
