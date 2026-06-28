@@ -68,6 +68,16 @@ export function CacheTiers({ tiers }: { tiers: TierMap }) {
           </span>
         </div>
       </dl>
+      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+        How the tiers fill each other: the server reads L1 first, and on a miss
+        pulls from <span className="font-medium text-foreground">L2</span> (the
+        durable store) and copies the value back up into L1. So when{' '}
+        <span className="font-medium text-foreground">L1</span> serves a request,{' '}
+        <span className="font-medium text-foreground">L2</span> is still{' '}
+        <span className="font-medium text-foreground">Used</span> — it is where
+        the entry is persisted and what repopulates L1 on the next cold start or
+        new instance.
+      </p>
       <ol className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {TIER_ORDER.map((id) => {
           const entry = tiers[id]
