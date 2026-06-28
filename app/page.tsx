@@ -1,6 +1,44 @@
 import Link from 'next/link'
 import { demoRoutes } from '@/lib/routes'
 import { CodeBlock } from '@/components/code-block'
+import { TIER_META, TIER_ORDER, type TierId } from '@/lib/cache-tiers'
+
+// Extra, overview-only detail layered on top of the shared TIER_META so the
+// per-example strip and this explainer stay in sync but read differently.
+const tierDetail: Record<
+  TierId,
+  {
+    accent: string
+    survivesTeardown: string
+    survivesDeploy: string
+    directive: string
+  }
+> = {
+  L0: {
+    accent: 'border-l-primary',
+    survivesTeardown: 'Yes — never touches the function',
+    survivesDeploy: 'Rebuilt each deploy',
+    directive: 'Fully static / prerendered routes',
+  },
+  L1: {
+    accent: 'border-l-live',
+    survivesTeardown: 'No — dies with the instance',
+    survivesDeploy: 'No',
+    directive: "'use cache' (warm path)",
+  },
+  L2: {
+    accent: 'border-l-cached',
+    survivesTeardown: 'Yes — shared durable store',
+    survivesDeploy: 'No by default (custom handler can)',
+    directive: "'use cache' + 'use cache: remote'",
+  },
+  private: {
+    accent: 'border-l-muted-foreground',
+    survivesTeardown: 'N/A — lives in the browser',
+    survivesDeploy: 'N/A',
+    directive: "'use cache: private'",
+  },
+}
 
 const comparison = [
   {
@@ -67,6 +105,79 @@ export default function OverviewPage() {
           <span className="font-semibold text-cached">CACHED</span> or{' '}
           <span className="font-semibold text-live-foreground">LIVE</span> so
           the distinction is always visible.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          Where caches live: L0, L1, L2 &amp; Private
+        </h2>
+        <p className="mt-3 max-w-2xl leading-relaxed text-muted-foreground">
+          A cached value can be served from one of four tiers. On every request
+          Next.js checks them in order — closest to the user first — and the
+          first tier holding a fresh entry wins. Each example highlights which
+          tiers it actually uses; here is what each one means.
+        </p>
+        <ol className="mt-5 flex flex-col gap-4">
+          {TIER_ORDER.map((id, index) => {
+            const meta = TIER_META[id]
+            const detail = tierDetail[id]
+            return (
+              <li
+                key={id}
+                className={`rounded-xl border border-border border-l-4 bg-card p-5 ${detail.accent}`}
+              >
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-xs font-semibold text-foreground">
+                    {index}
+                  </span>
+                  <h3 className="font-mono text-sm font-semibold text-card-foreground">
+                    {meta.name}
+                  </h3>
+                  <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                    {meta.where}
+                  </span>
+                </div>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  {meta.desc}
+                </p>
+                <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Survives function teardown
+                    </dt>
+                    <dd className="mt-1 text-card-foreground">
+                      {detail.survivesTeardown}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Survives new deploy
+                    </dt>
+                    <dd className="mt-1 text-card-foreground">
+                      {detail.survivesDeploy}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Typical directive
+                    </dt>
+                    <dd className="mt-1 font-mono text-xs text-card-foreground">
+                      {detail.directive}
+                    </dd>
+                  </div>
+                </dl>
+              </li>
+            )
+          })}
+        </ol>
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+          The big takeaway:{' '}
+          <span className="text-foreground">L1 is per-instance and ephemeral</span>
+          , while <span className="text-foreground">L2 is durable</span> and is
+          what lets ISR entries survive a serverless function shutting down.
+          Private never leaves the user&apos;s browser, so it is never shared or
+          stored on the server.
         </p>
       </section>
 
