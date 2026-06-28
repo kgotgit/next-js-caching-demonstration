@@ -99,6 +99,38 @@ The logging cache handler (`cache-handlers/`) wraps Next.js's real
 and only *adds* logging. In production you would swap the wrapped store for
 Redis/DynamoDB for true cross-deployment durability.
 
+### Why you can't exclude the deploymentId from the cache key
+
+A common question is whether you can strip the build/deployment ID out of the
+key so `'use cache'` entries survive a new deploy. **You can't do it cleanly,
+and here's why:**
+
+- Every `'use cache'` key is composed **upstream, before your handler runs**.
+  The first segment is the **Build ID** (or `deploymentId`, if configured, which
+  overrides it). By the time your handler's `get(cacheKey, …)` / `set(cacheKey,
+  …)` is called, `cacheKey` is already an **opaque, fully-composed string** —
+  there is no separate "deploymentId" field to omit.
+- This is **intentional**, not an oversight. A new deploy can change component
+  logic or the shape of the serialized RSC/Flight payload. The build ID acts as
+  a **safety boundary**: reusing an old entry under new code could deserialize
+  into something incompatible. So the framework deliberately invalidates all
+  `'use cache'` / `'use cache: remote'` entries on every deploy.
+- You *could* regex the build-hash segment out of `cacheKey` in the handler
+  before hitting your store, but that is **unsupported and unsafe** — it defeats
+  the boundary above and risks serving an old payload into a new build.
+
+**Supported ways to actually persist across deploys:**
+
+| Goal | Use |
+|---|---|
+| Persist `fetch` responses across deploys | Native **fetch Data Cache** — `fetch(url, { next: { revalidate, tags } })`, keyed by URL/options, not the build ID |
+| Persist non-fetch computed data across deploys | **`unstable_cache`** — keyed independently of the build |
+| Pin the key yourself | Set a **stable, constant `deploymentId`** in `next.config.js` so it stops changing per deploy (you then own the risk of keeping payload shapes compatible / busting it manually) |
+
+> Bottom line: treat `'use cache'` / `'use cache: remote'` as durable **within a
+> deployment**. For genuine cross-deploy persistence, reach for the fetch Data
+> Cache or `unstable_cache` rather than trying to manipulate the cache key.
+
 ### Visualizing the cache entries themselves
 
 Alongside the `HIT/MISS/WRITE` one-liners, the handler dumps what each entry
