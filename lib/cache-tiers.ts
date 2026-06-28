@@ -23,12 +23,12 @@ export const TIER_META: Record<TierId, TierInfo> = {
   L1: {
     name: 'L1 · In-memory LRU',
     where: 'Per warm instance',
-    desc: 'RAM cache inside the running function. Fastest server tier, but lives and dies with the instance.',
+    desc: 'RAM cache inside the running function. Read first on the server; on a miss it is filled from L2, then serves repeat hits on that same instance. Lives and dies with the instance.',
   },
   L2: {
     name: 'L2 · Durable store',
     where: 'Function region',
-    desc: 'ISR + Runtime Cache (the cacheHandler). Survives teardown and is shared across instances.',
+    desc: 'ISR + Runtime Cache (the cacheHandler) — the durable source of truth. The function writes entries here, and reads from it whenever L1 is empty (cold start, new instance, after teardown). Because it is shared across instances, it repopulates L1 and lets every instance serve the same cached value.',
   },
   private: {
     name: 'Private · Browser',
