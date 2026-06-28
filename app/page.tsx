@@ -200,7 +200,7 @@ const compositionQA = [
   },
   {
     q: 'Can a fetch-level cache be served across builds / deploys?',
-    a: "Not when it is wrapped in 'use cache'. That cache key includes the build (deploymentId), so it never carries over to a new deploy — same for 'use cache: remote'. If you need data to persist across deploys, use the native fetch Data Cache (fetch with next: { revalidate, tags }) or unstable_cache, which are keyed independently of the build.",
+    a: "Not when it is wrapped in 'use cache'. That cache key includes the build (deploymentId), so it never carries over to a new deploy — same for 'use cache: remote'. If you need data to persist across deploys, use the native fetch Data Cache (fetch with next: { revalidate, tags }) or unstable_cache, which are keyed independently of the build. Note: in Next.js 16 unstable_cache still works and is exported from next/cache, but the docs mark it as 'replaced by the use cache directive' — it was NOT renamed to getCache/setCache. It just remains the built-in API that survives a deploy, which 'use cache' does not.",
   },
   {
     q: 'If I invalidate ONLY the inner (fetch-level) tag, does the outer page regenerate too?',

@@ -124,8 +124,18 @@ and here's why:**
 | Goal | Use |
 |---|---|
 | Persist `fetch` responses across deploys | Native **fetch Data Cache** — `fetch(url, { next: { revalidate, tags } })`, keyed by URL/options, not the build ID |
-| Persist non-fetch computed data across deploys | **`unstable_cache`** — keyed independently of the build |
+| Persist non-fetch computed data across deploys | **`unstable_cache`** — the one built-in API whose entries persist across requests *and* deployments (see the note below) |
 | Pin the key yourself | Set a **stable, constant `deploymentId`** in `next.config.js` so it stops changing per deploy (you then own the risk of keeping payload shapes compatible / busting it manually) |
+
+> **Note on `unstable_cache` (Next.js 16):** it has **not** been renamed to
+> `getCache`/`setCache` and is **not** removed — it is still exported from
+> `next/cache` and still works. The official docs mark it as **"replaced by the
+> `use cache` directive"** and recommend migrating to Cache Components. The
+> catch: the recommended successor, `'use cache'`, does **not** persist across
+> deploys (its key includes the build ID), whereas `unstable_cache`
+> specifically **does**. So until an official cross-deploy story lands for
+> `'use cache'`, `unstable_cache` remains the built-in option when you truly
+> need entries to survive a deploy.
 
 > Bottom line: treat `'use cache'` / `'use cache: remote'` as durable **within a
 > deployment**. For genuine cross-deploy persistence, reach for the fetch Data
