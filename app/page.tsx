@@ -108,6 +108,34 @@ const storage = [
   },
 ]
 
+const docSources = [
+  {
+    claim: "'use cache' keys, nesting & tag bubbling",
+    label: 'use cache directive',
+    href: 'https://nextjs.org/docs/app/api-reference/directives/use-cache',
+  },
+  {
+    claim: "'max' (SWR) vs immediate invalidation & failure behavior",
+    label: 'revalidateTag',
+    href: 'https://nextjs.org/docs/app/api-reference/functions/revalidateTag',
+  },
+  {
+    claim: 'Default in-memory LRU & custom cache handlers',
+    label: 'cacheHandlers config',
+    href: 'https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheHandlers',
+  },
+  {
+    claim: "unstable_cache status (replaced by 'use cache', persists across deploys)",
+    label: 'unstable_cache',
+    href: 'https://nextjs.org/docs/app/api-reference/functions/unstable_cache',
+  },
+  {
+    claim: 'Where L2 lives on Vercel & how to observe it',
+    label: 'Vercel Runtime Cache',
+    href: 'https://vercel.com/docs/caching/runtime-cache',
+  },
+]
+
 const l2Storage = [
   {
     entry: 'Page-level / Dynamic ISR (whole-route prerenders)',
@@ -759,6 +787,47 @@ export default nextConfig`}
             </Link>
           ))}
         </div>
+      </section>
+
+      <section>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          Sources &amp; verification
+        </h2>
+        <p className="mt-3 max-w-2xl leading-relaxed text-muted-foreground">
+          These explanations aren&apos;t opinions — each non-obvious claim is
+          backed by the official Next.js docs (cross-checked against the copy
+          bundled in this repo&apos;s{' '}
+          <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs text-foreground">
+            node_modules/next/dist/docs
+          </code>{' '}
+          so it matches the installed version) and the Vercel docs, and the key
+          behaviors are reproduced live in the demos. Primary sources:
+        </p>
+        <ul className="mt-4 flex flex-col gap-2">
+          {docSources.map((source) => (
+            <li
+              key={source.href}
+              className="flex flex-col gap-1 rounded-lg border border-border bg-card p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
+            >
+              <span className="text-sm text-muted-foreground">
+                {source.claim}
+              </span>
+              <a
+                href={source.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 font-mono text-xs font-semibold text-primary underline-offset-4 hover:underline"
+              >
+                {source.label} &#8599;
+              </a>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          The README&apos;s &quot;Sources &amp; how these claims were
+          verified&quot; section has the full claim-to-doc map and the exact
+          files to diff.
+        </p>
       </section>
     </div>
   )

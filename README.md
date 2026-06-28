@@ -387,12 +387,39 @@ next.config.mjs             cacheComponents: true + cacheHandlers wiring
 
 ---
 
-## Learn more
+## Sources & how these claims were verified
 
-- [Cache Components](https://nextjs.org/docs/app/getting-started/cache-components)
-- [`use cache` directive](https://nextjs.org/docs/app/api-reference/directives/use-cache)
-- [`revalidateTag`](https://nextjs.org/docs/app/api-reference/functions/revalidateTag)
-- [`cacheHandlers` config](https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheHandlers)
-- [v0 Documentation](https://v0.app/docs)
+Don't take the explanations on faith. Every non-obvious claim in this project
+was verified one of three ways:
+
+1. **Against the official Next.js docs** — and specifically the copy **shipped
+   inside this repo's `node_modules/next/dist/docs/`**, so the guidance matches
+   the exact installed version (`next@16.3.0-preview.5`) rather than whatever is
+   live on the web. Each doc file maps 1:1 to a `nextjs.org` URL (linked below).
+2. **Against the Next.js source types** — e.g. the cache-handler stream/tee
+   behavior is read straight from
+   `node_modules/next/dist/server/lib/cache-handlers/types.d.ts`.
+3. **Empirically, in this repo** — behaviors like tag bubbling and SWR were
+   reproduced live and confirmed in the logs (see the `composition` demo).
+
+### Claim → source map
+
+| Claim in this project | Primary source |
+|---|---|
+| `use cache` key includes the build/deployment ID; nested caches bubble tags up; runtime considerations | [`use cache` directive](https://nextjs.org/docs/app/api-reference/directives/use-cache) |
+| `'max'` marks stale (SWR) and serves stale on a failed background refresh; `{ expire: 0 }` is immediate | [`revalidateTag`](https://nextjs.org/docs/app/api-reference/functions/revalidateTag) · [How revalidation works](https://nextjs.org/docs/app/guides/incremental-static-regeneration) |
+| `cacheLife` `stale` / `revalidate` / `expire` thresholds | [`cacheLife`](https://nextjs.org/docs/app/api-reference/functions/cacheLife) |
+| Tagging cached entries with `cacheTag` | [`cacheTag`](https://nextjs.org/docs/app/api-reference/functions/cacheTag) |
+| Default = in-memory LRU; when/why to write a custom handler; `get/set(cacheKey, …)` signature | [`cacheHandlers` config](https://nextjs.org/docs/app/api-reference/config/next-config-js/cacheHandlers) |
+| `unstable_cache` is "replaced by `use cache`" but still exported and persists across deploys | [`unstable_cache`](https://nextjs.org/docs/app/api-reference/functions/unstable_cache) |
+| Server Actions run as a `POST` to the same route, then re-render / refresh | [Server Actions guide](https://nextjs.org/docs/app/guides/data-fetching-and-caching) |
+| Opting into Cache Components / migration guidance | [Cache Components](https://nextjs.org/docs/app/getting-started/cache-components) |
+| Where L2 physically lives on Vercel (ISR store vs Runtime Cache) + observability | [Vercel Runtime Cache](https://vercel.com/docs/caching/runtime-cache) |
+
+> Verify any line yourself: open the matching file under
+> `node_modules/next/dist/docs/` (for example
+> `01-app/03-api-reference/01-directives/use-cache.md`) and compare. If you
+> upgrade Next.js, re-check these against the new bundled docs — caching
+> semantics evolve between versions.
 
 [Continue working on v0 →](https://v0.app/chat/projects/prj_8vNsYAKX7tpYFv59KSmTttrOIkkL)
