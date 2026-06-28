@@ -7,6 +7,7 @@ import { CacheTiers } from '@/components/cache-tiers'
 import { ReadingCard, ReadingCardSkeleton } from '@/components/reading-card'
 import { CodeBlock } from '@/components/code-block'
 import { ReloadButton } from '@/components/reload-button'
+import { WatchSignals } from '@/components/watch-signals'
 import { cn } from '@/lib/utils'
 
 const CURRENCIES = ['USD', 'EUR', 'GBP'] as const
@@ -141,6 +142,40 @@ export default function RemoteDemo() {
           <PriceForCurrency />
         </Suspense>
       </section>
+
+      <WatchSignals
+        ui={[
+          {
+            code: 'token stable per currency',
+            detail:
+              'Each currency has its own entry. Switch away and back within the window — the original token returns unchanged.',
+          },
+        ]}
+        network={[
+          {
+            code: 'POST /remote  ·  Next-Action: …',
+            detail:
+              'Each currency button is a Server Action that sets the cookie, so it posts back to this route rather than a GET navigation.',
+          },
+          {
+            code: 'x-vercel-cache: MISS',
+            detail:
+              'Expected — reading the cookie defers this to request time, so the route itself is not edge-cached. The sharing happens in the remote handler, not the CDN.',
+          },
+        ]}
+        logs={[
+          {
+            code: "remote 'use cache: remote' — COMPUTED widget-pro/USD",
+            detail:
+              'Prints once per (product, currency) MISS. Switch back to a currency you already loaded and there is no new line — served from the shared entry.',
+          },
+          {
+            code: 'cacheHandler:remote — L2 HIT / MISS / WRITE',
+            detail:
+              'Note it is :remote, not :default — this is the only demo that exercises the separate remote handler.',
+          },
+        ]}
+      />
 
       <section>
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">

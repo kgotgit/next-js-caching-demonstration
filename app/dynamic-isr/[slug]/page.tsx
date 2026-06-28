@@ -6,6 +6,7 @@ import { DemoHeader, ObserveHint } from '@/components/demo-header'
 import { ReadingCard, ReadingCardSkeleton } from '@/components/reading-card'
 import { CodeBlock } from '@/components/code-block'
 import { ReloadButton } from '@/components/reload-button'
+import { WatchSignals } from '@/components/watch-signals'
 
 // Slugs we choose to prerender AT BUILD TIME. Everything else is generated
 // ON FIRST REQUEST (ISR / fallback) and then cached.
@@ -154,6 +155,40 @@ export default function PageLevelISRDemo({
           <SlugView params={params} />
         </Suspense>
       </section>
+
+      <WatchSignals
+        ui={[
+          {
+            code: 'skeleton → content (first visit)',
+            detail:
+              'A brand-new slug (beta/gamma) flashes the App Shell skeleton, then streams content. Prebuilt alpha is instant from visit #1.',
+          },
+        ]}
+        network={[
+          {
+            code: 'x-vercel-cache: MISS → HIT',
+            detail:
+              'First visit to an un-prebuilt slug is a MISS (generated now); every visit after is HIT. alpha shows PRERENDER/HIT immediately.',
+          },
+          {
+            code: 'streamed document (chunked)',
+            detail:
+              'On the first visit the response streams — the shell arrives first, the slug content follows in the same request.',
+          },
+        ]}
+        logs={[
+          {
+            code: "dynamic-isr 'beta' — function BODY EXECUTED",
+            detail:
+              'Prints exactly once per slug, the first time it is generated, then never again on refresh until revalidation.',
+          },
+          {
+            code: 'cacheHandler:default — L2 WRITE',
+            detail:
+              'Accompanies that first generation as the new per-slug entry is persisted to the durable store.',
+          },
+        ]}
+      />
 
       <section>
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
