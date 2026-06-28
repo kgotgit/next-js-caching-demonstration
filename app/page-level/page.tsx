@@ -33,7 +33,7 @@ export default async function PageLevelDemo() {
       <DemoHeader
         directive="'use cache' · file level"
         title="Page-level caching"
-        description="Adding 'use cache' to the top of a page (and layout) caches the entire route. With no runtime APIs in play, the page is fully prerendered into the static shell at build time and served instantly."
+        description="Adding 'use cache' to the top of a page (and layout) caches the entire route. With no runtime (request-time) APIs in play, the page is fully prerendered into the static shell at build time and served instantly."
         timing="Build time"
         storage="Static shell (prerendered HTML + RSC payload)"
       >
@@ -75,6 +75,79 @@ export default async function PageLevelDemo() {
           reading={reading}
           note="Frozen into the static shell. Identical for every visitor until the cache lifetime ('days') elapses or the app is rebuilt."
         />
+      </section>
+
+      <section className="rounded-xl border border-border bg-card p-6">
+        <h2 className="text-base font-semibold text-card-foreground">
+          What does &quot;no runtime APIs in play&quot; mean?
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          A <span className="text-card-foreground">runtime API</span> is anything
+          whose value can only be known once a real request arrives — it depends
+          on <em>who</em> is asking or <em>when</em>. Because those values do not
+          exist at build time, using one forces the page to render per request.
+        </p>
+
+        <div className="mt-5 grid gap-4 sm:grid-cols-2">
+          <div className="rounded-lg border border-cached/40 bg-cached/5 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-cached">
+              No runtime APIs → fully prerendered
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Output is identical for everyone, so Next.js renders it once at
+              build, freezes the static shell, and serves it from the edge (L0).
+              This page is exactly that case.
+            </p>
+          </div>
+          <div className="rounded-lg border border-live/40 bg-live/5 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wider text-live-foreground">
+              Uses a runtime API → deferred to request time
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Output varies per request, so the dynamic part is streamed in at
+              request time and the route becomes Partial Prerender (a static
+              shell with dynamic holes).
+            </p>
+          </div>
+        </div>
+
+        <p className="mt-5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          The common runtime APIs
+        </p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {[
+            'cookies()',
+            'headers()',
+            'searchParams',
+            'connection()',
+            'draftMode()',
+            'request URL',
+          ].map((api) => (
+            <code
+              key={api}
+              className="rounded-md bg-muted px-2 py-1 font-mono text-xs text-foreground"
+            >
+              {api}
+            </code>
+          ))}
+        </div>
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+          You can see the other side of this line in the{' '}
+          <Link
+            href="/private"
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Private cache
+          </Link>{' '}
+          and{' '}
+          <Link
+            href="/remote"
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Remote cache
+          </Link>{' '}
+          demos, which read cookies and are therefore resolved per request.
+        </p>
       </section>
 
       <section className="rounded-xl border border-border bg-card p-5">
