@@ -37,6 +37,22 @@ export const knownTags: KnownTag[] = [
     note: 'The cached fetch response. Invalidating it forces one fresh upstream request on the next visit.',
   },
   {
+    tag: 'composition-page',
+    label: 'Composition · outer page',
+    href: '/composition',
+    pageLabel: 'Composition (nesting)',
+    invalidatable: true,
+    note: 'The outer page cache. Invalidating it regenerates the page, which also re-runs the nested inner cache.',
+  },
+  {
+    tag: 'composition-inner',
+    label: 'Composition · inner entry',
+    href: '/composition',
+    pageLabel: 'Composition (nesting)',
+    invalidatable: true,
+    note: 'The nested fetch/function-level entry. Because its tag bubbles up, invalidating it ALSO regenerates the outer page.',
+  },
+  {
     tag: 'isr-stat',
     label: 'ISR cached stat',
     href: '/isr',
