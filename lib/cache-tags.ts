@@ -13,6 +13,30 @@ export type KnownTag = {
 
 export const knownTags: KnownTag[] = [
   {
+    tag: 'page-level',
+    label: 'Page-level route',
+    href: '/page-level',
+    pageLabel: 'Page-level cache',
+    invalidatable: true,
+    note: 'A build-time prerendered route. Invalidating it forces an on-demand (ISR-style) regeneration on the next visit.',
+  },
+  {
+    tag: 'function-level',
+    label: 'Function-level entry',
+    href: '/function-level',
+    pageLabel: 'Function-level cache',
+    invalidatable: true,
+    note: "The memoized 'use cache' function. After invalidation the next render re-runs its body — watch for BODY EXECUTED then L2 WRITE.",
+  },
+  {
+    tag: 'fetch-level-posts',
+    label: 'Fetch-level response',
+    href: '/fetch-level',
+    pageLabel: 'Fetch-level cache',
+    invalidatable: true,
+    note: 'The cached fetch response. Invalidating it forces one fresh upstream request on the next visit.',
+  },
+  {
     tag: 'isr-stat',
     label: 'ISR cached stat',
     href: '/isr',

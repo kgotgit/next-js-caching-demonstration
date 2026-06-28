@@ -1,6 +1,6 @@
 'use cache'
 
-import { cacheLife } from 'next/cache'
+import { cacheLife, cacheTag } from 'next/cache'
 import { expensiveWork } from '@/lib/demo'
 import { DemoHeader, ObserveHint } from '@/components/demo-header'
 import { CacheTiers } from '@/components/cache-tiers'
@@ -20,6 +20,9 @@ import Link from 'next/link'
 export default async function PageLevelDemo() {
   // Keep the prerendered output for ~1 day before revalidating.
   cacheLife('days')
+  // Label the whole-route entry so a webhook can invalidate this build-time
+  // page on demand — see /webhook. Even fully static pages can carry a tag.
+  cacheTag('page-level')
 
   // This line only prints when the page body actually runs (build time or a
   // revalidation). If you refresh and see NO new log, the static shell was
@@ -75,6 +78,82 @@ export default async function PageLevelDemo() {
           reading={reading}
           note="Frozen into the static shell. Identical for every visitor until the cache lifetime ('days') elapses or the app is rebuilt."
         />
+      </section>
+
+      <section className="rounded-xl border border-border bg-card p-6">
+        <h2 className="text-base font-semibold text-card-foreground">
+          What happens if you invalidate this build-time cache?
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+          This page carries a{' '}
+          <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
+            cacheTag(&apos;page-level&apos;)
+          </code>
+          , so a webhook can invalidate it even though it was prerendered at
+          build. Invalidating it does <em>not</em> rebuild your app — it only
+          marks the cached entry, and the route is regenerated on demand:
+        </p>
+        <ol className="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-muted-foreground">
+          <li className="flex gap-3">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-[11px] text-foreground">
+              1
+            </span>
+            <span>
+              The webhook calls{' '}
+              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
+                revalidateTag(&apos;page-level&apos;)
+              </code>
+              , which expires the entry in the durable store (L2) and the edge
+              (L0). Your code is untouched.
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-[11px] text-foreground">
+              2
+            </span>
+            <span>
+              On the <span className="text-card-foreground">next request</span>,
+              the prebuilt shell can no longer be served as-is, so the function{' '}
+              <span className="text-card-foreground">runs again at request time</span>{' '}
+              — exactly like an ISR regeneration. You&apos;ll see{' '}
+              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
+                page-level BODY EXECUTED
+              </code>{' '}
+              followed by a fresh{' '}
+              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
+                L2 WRITE
+              </code>{' '}
+              in the logs.
+            </span>
+          </li>
+          <li className="flex gap-3">
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-muted font-mono text-[11px] text-foreground">
+              3
+            </span>
+            <span>
+              The freshly generated entry is cached again and served from the
+              edge. The original build-time artifact is{' '}
+              <span className="text-card-foreground">not restored</span> — the
+              regenerated one replaces it until your next deploy, which rebuilds
+              from scratch.
+            </span>
+          </li>
+        </ol>
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+          Net effect: invalidating a build-time page turns that one entry into an
+          on-demand (ISR) regeneration. Try it from the{' '}
+          <Link
+            href="/webhook"
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Webhook invalidation
+          </Link>{' '}
+          example using the{' '}
+          <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
+            page-level
+          </code>{' '}
+          tag.
+        </p>
       </section>
 
       <section className="rounded-xl border border-border bg-card p-6">
@@ -184,10 +263,11 @@ export default async function PageLevelDemo() {
           filename="app/page-level/page.tsx"
           code={`'use cache'
 
-import { cacheLife } from 'next/cache'
+import { cacheLife, cacheTag } from 'next/cache'
 
 export default async function PageLevelDemo() {
-  cacheLife('days') // revalidate the whole route once per day
+  cacheLife('days')      // revalidate the whole route once per day
+  cacheTag('page-level') // label it so a webhook can invalidate on demand
 
   const reading = await getExpensiveData()
   return <ReadingCard reading={reading} />

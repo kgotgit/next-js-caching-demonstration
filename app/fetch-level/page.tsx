@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import { connection } from 'next/server'
-import { cacheLife } from 'next/cache'
+import { cacheLife, cacheTag } from 'next/cache'
 import { DemoHeader, ObserveHint } from '@/components/demo-header'
 import { CacheTiers } from '@/components/cache-tiers'
 import { ReadingCardSkeleton } from '@/components/reading-card'
@@ -24,6 +24,8 @@ type FetchResult = {
 async function getCachedPosts(): Promise<FetchResult> {
   'use cache'
   cacheLife('minutes')
+  // Tag the cached fetch so a webhook can force a fresh upstream request.
+  cacheTag('fetch-level-posts')
   // Only logs on a MISS (when the upstream fetch actually happens). No new log
   // on refresh = the cached response was served without touching the network.
   console.log(`[v0] fetch-level CACHED 'use cache' — UPSTREAM FETCH at ${new Date().toISOString()}`)
@@ -189,6 +191,7 @@ export default function FetchLevelDemo() {
           code={`async function getCachedPosts() {
   'use cache'
   cacheLife('minutes')
+  cacheTag('fetch-level-posts') // invalidate on demand via a webhook
 
   const res = await fetch('https://api.vercel.app/blog')
   return res.json() // response memoized per cache key
