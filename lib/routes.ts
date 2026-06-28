@@ -48,4 +48,10 @@ export const demoRoutes: DemoRoute[] = [
     directive: "'use cache: private'",
     blurb: 'Per-user cache that may read cookies and headers.',
   },
+  {
+    href: '/webhook',
+    label: 'Webhook invalidation',
+    directive: 'revalidateTag',
+    blurb: 'Invalidate cache tags on demand via a webhook and trace the logs.',
+  },
 ]

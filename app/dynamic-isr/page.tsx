@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { DemoHeader, ObserveHint } from '@/components/demo-header'
+import { CacheTiers } from '@/components/cache-tiers'
 import { CodeBlock } from '@/components/code-block'
 
 // This landing page itself is fully static — it reads no runtime data, so it is
@@ -16,6 +17,22 @@ export default function DynamicIsrDemo() {
         timing="Build time (prebuilt slugs) + first request (the rest)"
         storage="Static App Shell + per-slug cache entry"
       >
+        <CacheTiers
+          tiers={{
+            L0: {
+              status: 'primary',
+              note: 'Prebuilt slugs and the generic App Shell are served from the edge.',
+            },
+            L1: {
+              status: 'used',
+              note: 'A freshly generated slug warms in memory for that instance.',
+            },
+            L2: {
+              status: 'primary',
+              note: 'On-demand slug entries persist in the durable store, so they survive teardown — watch cacheHandler:default WRITE on first visit.',
+            },
+          }}
+        />
         <ObserveHint
           items={[
             'Only "alpha" is prebuilt at build time. "beta" and "gamma" are generated on first visit, then cached.',
@@ -101,6 +118,63 @@ export default function DynamicIsrDemo() {
             better when you want a guaranteed-fast first byte for every known URL.
           </li>
         </ul>
+      </section>
+
+      <section className="rounded-xl border border-cached/30 bg-cached/5 p-6">
+        <h2 className="text-base font-semibold text-card-foreground">
+          Does the cache survive the serverless function shutting down?
+        </h2>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          <span className="text-card-foreground">Yes — within the same deployment.</span>{' '}
+          Serverless functions are short-lived: they spin up for a request, stay
+          warm briefly, then get torn down. But that instance lifecycle is{' '}
+          <span className="text-card-foreground">decoupled</span> from the cache
+          lifecycle, because an ISR entry is written to two tiers:
+        </p>
+        <ul className="mt-3 flex flex-col gap-2 text-sm leading-relaxed text-muted-foreground">
+          <li>
+            <span className="text-card-foreground">In-memory (L1):</span> lives
+            and dies with the function instance — the fast path while it stays
+            warm.
+          </li>
+          <li>
+            <span className="text-card-foreground">Durable store (L2):</span>{' '}
+            lives at the deployment level, independent of any instance. It
+            persists across every cold start and teardown.
+          </li>
+        </ul>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          So when the original instance dies and a fresh cold instance picks up
+          the next request, it finds an empty memory cache but reads the entry
+          from the durable store and{' '}
+          <span className="text-card-foreground">serves it without regenerating</span>.
+          The function dying is invisible to the cache — you only pay a slightly
+          slower lookup, not a rebuild.
+        </p>
+        <div className="mt-4 rounded-lg border border-border bg-card p-4">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Regeneration happens only when
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-card-foreground">
+            the <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">cacheLife</code>{' '}
+            window expires, a tag is invalidated (
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">revalidateTag</code>{' '}
+            /{' '}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">updateTag</code>
+            ), the entry is evicted, or you ship a new deployment. Function
+            teardown is <span className="font-medium">not</span> on that list.
+          </p>
+        </div>
+        <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+          Caveat: this is the Vercel (and any external{' '}
+          <code className="rounded bg-muted px-1 py-0.5 font-mono text-[11px]">
+            cacheHandler
+          </code>
+          ) behavior. On a bare single-process self-host with{' '}
+          <span className="text-card-foreground">only</span> the in-memory tier,
+          losing the process does mean the next request regenerates — the durable
+          layer is exactly what prevents that.
+        </p>
       </section>
 
       <section>

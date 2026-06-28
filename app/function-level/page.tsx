@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { cacheLife } from 'next/cache'
 import { expensiveWork } from '@/lib/demo'
 import { DemoHeader, ObserveHint } from '@/components/demo-header'
+import { CacheTiers } from '@/components/cache-tiers'
 import { ReadingCard, ReadingCardSkeleton } from '@/components/reading-card'
 import { LiveReading } from '@/components/live-reading'
 import { CodeBlock } from '@/components/code-block'
@@ -51,6 +52,22 @@ export default function FunctionLevelDemo() {
         timing="Build time + runtime (in-memory)"
         storage="In-memory LRU (per cache key)"
       >
+        <CacheTiers
+          tiers={{
+            L0: {
+              status: 'unused',
+              note: 'The page is dynamic (it also streams a live value), so it is never served whole from the edge.',
+            },
+            L1: {
+              status: 'primary',
+              note: "The 'use cache' result lives in the in-memory LRU, keyed by the function + args.",
+            },
+            L2: {
+              status: 'used',
+              note: 'Our logging cacheHandler persists it durably — watch the cacheHandler:default lines in the logs.',
+            },
+          }}
+        />
         <ObserveHint
           items={[
             'The two CACHED cards are always identical — one cache entry, served twice.',
