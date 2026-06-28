@@ -7,6 +7,7 @@ import { ReadingCard, ReadingCardSkeleton } from '@/components/reading-card'
 import { LiveReading } from '@/components/live-reading'
 import { CodeBlock } from '@/components/code-block'
 import { ReloadButton } from '@/components/reload-button'
+import { WatchSignals } from '@/components/watch-signals'
 
 // Only THIS FUNCTION is cached — not the whole page. The page itself stays
 // dynamic so it can also render live, streamed content. The cached result is
@@ -106,6 +107,40 @@ export default function FunctionLevelDemo() {
           <LiveReading note="No 'use cache' here, so this runs on every request and always differs from the cached cards above." />
         </Suspense>
       </section>
+
+      <WatchSignals
+        ui={[
+          {
+            code: 'Call #1 === Call #2',
+            detail:
+              'Both cached cards are identical and frozen for the cacheLife window; the live card differs every refresh.',
+          },
+        ]}
+        network={[
+          {
+            code: '(no fetch for the 800ms work)',
+            detail:
+              'The cached work runs on the server — it never appears as a browser request. The Network tab only shows the page/RSC payload, not the cache lookup.',
+          },
+          {
+            code: '?_rsc=… → 200',
+            detail:
+              'A soft navigation here issues an RSC request for the route; the cached value is already embedded in that server response.',
+          },
+        ]}
+        logs={[
+          {
+            code: "function-level 'use cache' — function BODY EXECUTED",
+            detail:
+              'Prints once on a MISS, then stays silent on refreshes within the window — that silence is the HIT.',
+          },
+          {
+            code: 'cacheHandler:default — L2 HIT / MISS / WRITE',
+            detail:
+              'MISS + WRITE on the first render, then HIT on subsequent renders that reuse the entry.',
+          },
+        ]}
+      />
 
       <section>
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">

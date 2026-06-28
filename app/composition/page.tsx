@@ -4,6 +4,7 @@ import { DemoHeader, ObserveHint } from '@/components/demo-header'
 import { CacheTiers } from '@/components/cache-tiers'
 import { ReadingCard } from '@/components/reading-card'
 import { CodeBlock } from '@/components/code-block'
+import { WatchSignals } from '@/components/watch-signals'
 import { expensiveWork } from '@/lib/demo'
 
 // INNER cache — imagine this is a shared data function or a wrapped fetch().
@@ -81,6 +82,35 @@ export default async function CompositionDemo() {
           note="Tagged 'composition-inner'. Embedded in the page above."
         />
       </section>
+
+      <WatchSignals
+        ui={[
+          {
+            code: 'invalidate inner → BOTH change',
+            detail:
+              "Invalidate only 'composition-inner' from the webhook and the OUTER timestamp updates too — the proof that tags bubble up.",
+          },
+        ]}
+        network={[
+          {
+            code: 'x-vercel-cache: HIT → MISS → HIT',
+            detail:
+              'The composed page is edge-served (HIT). After invalidating either tag the next request is a MISS while it regenerates, then HIT again.',
+          },
+        ]}
+        logs={[
+          {
+            code: 'cacheHandler:default — INVALIDATE tags=[composition-inner]',
+            detail:
+              'Even though you only targeted the inner tag, the outer entry is purged because it embeds the inner result.',
+          },
+          {
+            code: 'composition INNER + OUTER — BODY EXECUTED',
+            detail:
+              'BOTH lines print together on the next visit — the page body re-runs, which re-runs the nested cache. You never get a stale outer wrapping fresh inner.',
+          },
+        ]}
+      />
 
       <section>
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">

@@ -7,6 +7,7 @@ import { ReadingCard, ReadingCardSkeleton } from '@/components/reading-card'
 import { LiveReading } from '@/components/live-reading'
 import { CodeBlock } from '@/components/code-block'
 import { ReloadButton } from '@/components/reload-button'
+import { WatchSignals } from '@/components/watch-signals'
 
 // ISR-style behavior with Cache Components:
 //  - cacheLife controls TIME-BASED revalidation (stale-while-revalidate).
@@ -106,6 +107,40 @@ export default function IsrDemo() {
           <LiveReading note="Always regenerates, ignoring any revalidation window." />
         </Suspense>
       </section>
+
+      <WatchSignals
+        ui={[
+          {
+            code: 'frozen → stale → fresh',
+            detail:
+              'Within 10s the value is frozen; past the window the first refresh serves stale, the next shows freshly regenerated data.',
+          },
+        ]}
+        network={[
+          {
+            code: 'x-vercel-cache: STALE',
+            detail:
+              'Appears on the request that serves stale content while a refresh runs in the background — the SWR signature. Flips back to HIT once refreshed.',
+          },
+          {
+            code: 'POST /isr  ·  Next-Action: …',
+            detail:
+              '"Revalidate now" is a Server Action, so it shows as a POST to this route (not a GET) carrying the Next-Action header.',
+          },
+        ]}
+        logs={[
+          {
+            code: "isr 'use cache' — REGENERATED",
+            detail:
+              'Prints when the entry is rebuilt: after the revalidate window lapses, or right after you invalidate the tag.',
+          },
+          {
+            code: 'cacheHandler:default — L2 INVALIDATE tags=[isr-stat]',
+            detail:
+              'Fires the moment you click "Revalidate now" (updateTag), before the next render regenerates.',
+          },
+        ]}
+      />
 
       <section>
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">

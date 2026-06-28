@@ -6,6 +6,7 @@ import { CacheTiers } from '@/components/cache-tiers'
 import { ReadingCardSkeleton } from '@/components/reading-card'
 import { CodeBlock } from '@/components/code-block'
 import { ReloadButton } from '@/components/reload-button'
+import { WatchSignals } from '@/components/watch-signals'
 import { cn } from '@/lib/utils'
 import { formatTime } from '@/lib/demo'
 
@@ -180,6 +181,40 @@ export default function FetchLevelDemo() {
           </Suspense>
         </div>
       </section>
+
+      <WatchSignals
+        ui={[
+          {
+            code: 'Cached "Fetched at" frozen',
+            detail:
+              'The cached panel keeps its timestamp for the window; the live panel updates on every refresh.',
+          },
+        ]}
+        network={[
+          {
+            code: 'api.vercel.app/blog — NOT listed',
+            detail:
+              'The upstream fetch happens on the server, so it never appears in the browser Network tab. This is the #1 thing people expect to see and do not.',
+          },
+          {
+            code: 'document / ?_rsc=… only',
+            detail:
+              'The browser only requests the page; the fetched posts arrive already rendered inside that response.',
+          },
+        ]}
+        logs={[
+          {
+            code: "fetch-level CACHED 'use cache' — UPSTREAM FETCH",
+            detail:
+              'Prints once per cache window. N refreshes = 1 upstream request — this is the API protection in action.',
+          },
+          {
+            code: 'fetch-level LIVE (uncached) — UPSTREAM FETCH',
+            detail:
+              'Prints on EVERY request — the contrast that proves the cached path is skipping the network.',
+          },
+        ]}
+      />
 
       <section>
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">

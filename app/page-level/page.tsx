@@ -7,6 +7,7 @@ import { CacheTiers } from '@/components/cache-tiers'
 import { ReadingCard } from '@/components/reading-card'
 import { CodeBlock } from '@/components/code-block'
 import { ReloadButton } from '@/components/reload-button'
+import { WatchSignals } from '@/components/watch-signals'
 import Link from 'next/link'
 
 // The 'use cache' directive at the TOP OF THE FILE caches the entire route.
@@ -79,6 +80,40 @@ export default async function PageLevelDemo() {
           note="Frozen into the static shell. Identical for every visitor until the cache lifetime ('days') elapses or the app is rebuilt."
         />
       </section>
+
+      <WatchSignals
+        ui={[
+          {
+            code: 'token + timestamp',
+            detail:
+              'Never change on refresh — captured once at build and reused for everyone.',
+          },
+        ]}
+        network={[
+          {
+            code: 'x-vercel-cache: HIT',
+            detail:
+              'On the document request. A never-before-served page shows PRERENDER first, then HIT. You should never see MISS here under normal load.',
+          },
+          {
+            code: 'age: <seconds>',
+            detail:
+              'Climbs on each refresh, confirming the same cached artifact is being reused rather than regenerated.',
+          },
+        ]}
+        logs={[
+          {
+            code: "(no new 'page-level … BODY EXECUTED')",
+            detail:
+              'Silence on refresh IS the signal — the static shell was served without running the function.',
+          },
+          {
+            code: 'cacheHandler:default — L2 WRITE',
+            detail:
+              'Only appears at build or after invalidation, never on a plain refresh.',
+          },
+        ]}
+      />
 
       <section className="rounded-xl border border-border bg-card p-6">
         <h2 className="text-base font-semibold text-card-foreground">

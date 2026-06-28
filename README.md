@@ -99,6 +99,102 @@ The logging cache handler (`cache-handlers/`) wraps Next.js's real
 and only *adds* logging. In production you would swap the wrapped store for
 Redis/DynamoDB for true cross-deployment durability.
 
+### Why you can't exclude the deploymentId from the cache key
+
+A common question is whether you can strip the build/deployment ID out of the
+key so `'use cache'` entries survive a new deploy. **You can't do it cleanly,
+and here's why:**
+
+- Every `'use cache'` key is composed **upstream, before your handler runs**.
+  The first segment is the **Build ID** (or `deploymentId`, if configured, which
+  overrides it). By the time your handler's `get(cacheKey, …)` / `set(cacheKey,
+  …)` is called, `cacheKey` is already an **opaque, fully-composed string** —
+  there is no separate "deploymentId" field to omit.
+- This is **intentional**, not an oversight. A new deploy can change component
+  logic or the shape of the serialized RSC/Flight payload. The build ID acts as
+  a **safety boundary**: reusing an old entry under new code could deserialize
+  into something incompatible. So the framework deliberately invalidates all
+  `'use cache'` / `'use cache: remote'` entries on every deploy.
+- You *could* regex the build-hash segment out of `cacheKey` in the handler
+  before hitting your store, but that is **unsupported and unsafe** — it defeats
+  the boundary above and risks serving an old payload into a new build.
+
+**Supported ways to actually persist across deploys:**
+
+| Goal | Use |
+|---|---|
+| Persist `fetch` responses across deploys | Native **fetch Data Cache** — `fetch(url, { next: { revalidate, tags } })`, keyed by URL/options, not the build ID |
+| Persist non-fetch computed data across deploys | **`unstable_cache`** — the one built-in API whose entries persist across requests *and* deployments (see the note below) |
+| Pin the key yourself | Set a **stable, constant `deploymentId`** in `next.config.js` so it stops changing per deploy (you then own the risk of keeping payload shapes compatible / busting it manually) |
+
+> **Note on `unstable_cache` (Next.js 16):** it has **not** been renamed to
+> `getCache`/`setCache` and is **not** removed — it is still exported from
+> `next/cache` and still works. The official docs mark it as **"replaced by the
+> `use cache` directive"** and recommend migrating to Cache Components. The
+> catch: the recommended successor, `'use cache'`, does **not** persist across
+> deploys (its key includes the build ID), whereas `unstable_cache`
+> specifically **does**. So until an official cross-deploy story lands for
+> `'use cache'`, `unstable_cache` remains the built-in option when you truly
+> need entries to survive a deploy.
+
+> Bottom line: treat `'use cache'` / `'use cache: remote'` as durable **within a
+> deployment**. For genuine cross-deploy persistence, reach for the fetch Data
+> Cache or `unstable_cache` rather than trying to manipulate the cache key.
+
+### Visualizing the cache entries themselves
+
+Alongside the `HIT/MISS/WRITE` one-liners, the handler dumps what each entry
+actually contains on every read and write:
+
+```
+[v0] cacheHandler:default — L2 ENTRY (HIT) key=…
+        tags=[page-level] created=2026-… stale=300s revalidate=86400s expire=604800s
+[v0] cacheHandler:default — L2 VALUE (HIT) key=… ~19075 bytes (RSC/Flight payload)
+        ":N1782…\n2:[[\"PageLevelDemo\",…   …(truncated)
+```
+
+- **`L2 ENTRY`** prints the metadata: `tags`, creation time, and the three
+  `cacheLife` thresholds (`stale` / `revalidate` / `expire`, in seconds).
+- **`L2 VALUE`** prints the byte size and a capped preview of the serialized
+  RSC/Flight payload — the actual bytes stored in L2.
+
+Implementation note: the entry's `value` is a one-shot `ReadableStream`, so the
+handler **tees** it — one copy goes to the real consumer, the other is read
+(capped at 16 KB) only for the preview. This never blocks or drains the stream
+the page depends on. Set `CACHE_LOG_ENTRIES=0` to silence these dumps and keep
+only the one-liners.
+
+> Caveat: Next.js loads `cacheHandler` modules **once at server startup** and
+> does not hot-reload them. After editing anything in `cache-handlers/`, restart
+> the dev server (`next dev`) or rebuild — a hot reload alone will keep running
+> the old handler.
+
+### Observation: the `POST` → `GET` pattern in the logs (not a bug)
+
+When you interact with the currency switcher (`/remote`), the name picker
+(`/private`), "Revalidate now" (`/isr`), or the webhook trigger, you will see a
+`POST` to the current route immediately followed by a `GET` (often
+`?_rsc=…`). **This is expected** — it is the normal Server Action lifecycle, not
+a redirect loop or a misconfiguration.
+
+- A Server Action (`'use server'`) compiles to a reference that **POSTs back to
+  the same route**, carrying a `Next-Action: <id>` header. That `POST` is the
+  action *executing* — it is not a page load.
+- After the action runs, the router needs fresh UI, so what follows depends on
+  what the action did:
+
+| What you see | Why |
+|---|---|
+| `POST /route` + `Next-Action` header | The Server Action firing |
+| The **POST response itself is an RSC/Flight stream** (no separate GET) | A re-render was bundled in — happens when the action sets a **cookie**, or calls `updateTag` / `revalidatePath` / `refresh` / `redirect`. This is why `/remote` and `/private` (which set cookies) refresh in place. |
+| A following **`GET /route?_rsc=…`** | The router fetching fresh RSC on a *later* read — typical after a `revalidateTag` with the **SWR (`'max'`) profile**, which deliberately does **not** bundle a re-render into the action response. |
+| A `GET` of a **different** route after the `POST` | The action called `redirect()`. |
+
+> Rule of thumb: `POST` = the action ran; the trailing `GET`/RSC fetch = the
+> router reconciling the UI afterward. Cookie-setting and immediate-invalidation
+> actions re-render *inside* the POST response; `'max'` (SWR) defers the refresh
+> to a subsequent GET.
+
 ---
 
 ## Cache tags (for manual invalidation)

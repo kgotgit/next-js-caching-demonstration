@@ -7,6 +7,7 @@ import { CacheTiers } from '@/components/cache-tiers'
 import { ReadingCard, ReadingCardSkeleton } from '@/components/reading-card'
 import { CodeBlock } from '@/components/code-block'
 import { ReloadButton } from '@/components/reload-button'
+import { WatchSignals } from '@/components/watch-signals'
 
 const NAMES = ['Ada', 'Linus', 'Grace'] as const
 
@@ -120,6 +121,40 @@ export default function PrivateDemo() {
           <Greeting />
         </Suspense>
       </section>
+
+      <WatchSignals
+        ui={[
+          {
+            code: 'stable on soft refresh',
+            detail:
+              'The greeting holds through the in-app Refresh button, but a full browser reload (Cmd/Ctrl+R) re-runs it — nothing is stored on the server.',
+          },
+        ]}
+        network={[
+          {
+            code: 'POST /private  ·  Next-Action: …',
+            detail:
+              'Picking a name is a Server Action that sets the cookie; the personalized value is then cached in this browser only.',
+          },
+          {
+            code: 'no shared CDN cache',
+            detail:
+              'Personalized + cookie-reading, so you will not see x-vercel-cache: HIT here — that would mean leaking one user’s data to another.',
+          },
+        ]}
+        logs={[
+          {
+            code: '(no cacheHandler lines at all)',
+            detail:
+              'The decisive signal: private entries never reach the server handler, so unlike every other demo you see ZERO cacheHandler:default / :remote logs.',
+          },
+          {
+            code: "private 'use cache: private' — function BODY EXECUTED",
+            detail:
+              'Fires on the initial render and on a hard reload, but not on soft navigations that reuse the browser-side entry.',
+          },
+        ]}
+      />
 
       <section>
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
