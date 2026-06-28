@@ -19,7 +19,7 @@ import Link from 'next/link'
 
 export default async function PageLevelDemo() {
   // Keep the prerendered output for ~1 day before revalidating.
-  cacheLife('days')
+  cacheLife({ stale: 12 * 3600, revalidate: 6 * 3600, expire: 24 * 3600 })
   // Label the whole-route entry so a webhook can invalidate this build-time
   // page on demand — see /webhook. Even fully static pages can carry a tag.
   cacheTag('page-level')

@@ -15,7 +15,7 @@ async function getStat() {
   'use cache'
   // After `revalidate` seconds the entry is served stale once while it
   // refreshes in the background — the classic ISR pattern.
-  cacheLife({ stale: 5, revalidate: 10, expire: 30 })
+  cacheLife({ stale: 12 * 3600, revalidate: 6 * 3600, expire: 24 * 3600 })
   cacheTag('isr-stat')
   // Watch this in the logs: frozen within the window (no log), then a new log
   // appears when it regenerates after the revalidate window or an updateTag.

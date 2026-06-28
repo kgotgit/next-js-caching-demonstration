@@ -25,7 +25,7 @@ export function generateStaticParams() {
 // result is frozen until `cacheLife` revalidates it.
 async function getReadingFor(slug: string) {
   'use cache'
-  cacheLife('minutes')
+  cacheLife({ stale: 12 * 3600, revalidate: 6 * 3600, expire: 24 * 3600 })
   cacheTag(`dynamic-isr-${slug}`)
   console.log(
     `[v0] dynamic-isr '${slug}' — function BODY EXECUTED at ${new Date().toISOString()}`,

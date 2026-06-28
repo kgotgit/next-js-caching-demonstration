@@ -23,7 +23,7 @@ type FetchResult = {
 // Subsequent calls return the stored response instead of hitting the network.
 async function getCachedPosts(): Promise<FetchResult> {
   'use cache'
-  cacheLife('minutes')
+  cacheLife('days')
   // Tag the cached fetch so a webhook can force a fresh upstream request.
   cacheTag('fetch-level-posts')
   // Only logs on a MISS (when the upstream fetch actually happens). No new log

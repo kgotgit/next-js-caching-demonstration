@@ -13,7 +13,7 @@ import { ReloadButton } from '@/components/reload-button'
 // shared everywhere the function is called and deduped within a render.
 async function getCachedReading() {
   'use cache'
-  cacheLife('minutes')
+  cacheLife('days')
   // Tag the cached function so it can be invalidated on demand via /webhook.
   cacheTag('function-level')
   // Prints ONCE per cache window. Called twice per render but you'll see a

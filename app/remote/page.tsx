@@ -23,7 +23,7 @@ async function getProductPrice(
 ): Promise<{ price: string; reading: Reading }> {
   'use cache: remote'
   cacheTag(`price-${productId}-${currency}`)
-  cacheLife({ stale: 60, revalidate: 120, expire: 600 })
+  cacheLife({ stale: 12 * 3600, revalidate: 6 * 3600, expire: 24 * 3600 })
 
   // Logs per (productId, currency) MISS. Switch currency to force a new key/log;
   // switch back within the window and no new log = served from the remote cache.

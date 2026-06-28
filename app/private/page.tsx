@@ -17,7 +17,7 @@ const NAMES = ['Ada', 'Linus', 'Grace'] as const
 async function getGreeting(): Promise<{ visitor: string; reading: Reading }> {
   'use cache: private'
   // stale must be >= 30s for client-side runtime prefetching to work.
-  cacheLife({ stale: 60 })
+  cacheLife({ stale: 3600 })
   cacheTag('greeting')
 
   // Note: because this is cached in the BROWSER, this server-side log fires on
