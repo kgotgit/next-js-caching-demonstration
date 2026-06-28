@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { cacheLife } from 'next/cache'
+import { cacheLife, cacheTag } from 'next/cache'
 import { expensiveWork } from '@/lib/demo'
 import { DemoHeader, ObserveHint } from '@/components/demo-header'
 import { CacheTiers } from '@/components/cache-tiers'
@@ -14,6 +14,8 @@ import { ReloadButton } from '@/components/reload-button'
 async function getCachedReading() {
   'use cache'
   cacheLife('minutes')
+  // Tag the cached function so it can be invalidated on demand via /webhook.
+  cacheTag('function-level')
   // Prints ONCE per cache window. Called twice per render but you'll see a
   // single log on a MISS; refresh within the window and no new log = HIT.
   console.log(`[v0] function-level 'use cache' — function BODY EXECUTED at ${new Date().toISOString()}`)
@@ -115,6 +117,7 @@ export default function FunctionLevelDemo() {
           code={`async function getCachedReading() {
   'use cache'
   cacheLife('minutes')
+  cacheTag('function-level') // invalidate on demand via a webhook
   return getExpensiveData()
 }
 
