@@ -49,6 +49,12 @@ export const demoRoutes: DemoRoute[] = [
     blurb: 'Per-user cache that may read cookies and headers.',
   },
   {
+    href: '/composition',
+    label: 'Composition (nesting)',
+    directive: "nested 'use cache'",
+    blurb: 'Nest caches and watch inner-tag invalidation bubble up to the page.',
+  },
+  {
     href: '/webhook',
     label: 'Webhook invalidation',
     directive: 'revalidateTag',

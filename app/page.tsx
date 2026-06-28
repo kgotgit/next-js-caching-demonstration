@@ -108,6 +108,60 @@ const storage = [
   },
 ]
 
+const strategyGuide = [
+  {
+    when: 'A whole route is the same for everyone',
+    use: 'Page-level',
+    directive: "'use cache' (top of file)",
+    href: '/page-level',
+  },
+  {
+    when: 'One expensive computation reused across components',
+    use: 'Function-level',
+    directive: "'use cache' (in the function)",
+    href: '/function-level',
+  },
+  {
+    when: 'Memoize a network response (and tag it)',
+    use: 'Fetch-level',
+    directive: "'use cache' around fetch()",
+    href: '/fetch-level',
+  },
+  {
+    when: 'Generate per-URL pages on first request, then cache',
+    use: 'Dynamic ISR',
+    directive: "'use cache' + params",
+    href: '/dynamic-isr',
+  },
+  {
+    when: 'Share a durable cache across instances at runtime',
+    use: 'Remote',
+    directive: "'use cache: remote'",
+    href: '/remote',
+  },
+  {
+    when: 'Output depends on the user (cookies / headers)',
+    use: 'Private',
+    directive: "'use cache: private'",
+    href: '/private',
+  },
+]
+
+const compositionQA = [
+  {
+    q: 'If a page or function is wrapped in use cache, do I still need a fetch-level cache inside it?',
+    a: "Not for correctness. The outer cache captures the entire subtree's output — including any fetch results — into one entry, so the inner fetch is already frozen with the page. Add an inner cache only when that fetch is ALSO called from uncached/dynamic code, needs a different (usually shorter) lifetime, or needs its own invalidation tag.",
+  },
+  {
+    q: 'Can a fetch-level cache be served across builds / deploys?',
+    a: "Not when it is wrapped in 'use cache'. That cache key includes the build (deploymentId), so it never carries over to a new deploy — same for 'use cache: remote'. If you need data to persist across deploys, use the native fetch Data Cache (fetch with next: { revalidate, tags }) or unstable_cache, which are keyed independently of the build.",
+  },
+  {
+    q: 'If I invalidate ONLY the inner (fetch-level) tag, does the outer page regenerate too?',
+    a: "Yes. Because the page's cached output embeds the inner result, the outer entry inherits the inner's tags. Invalidating the inner tag purges BOTH entries, so the next request re-runs the page body, which re-runs the inner cache. You never get a stale page wrapping fresh inner data. This is verified live in the Composition demo.",
+  },
+]
+
 const comparison = [
   {
     feature: 'Server-side storage',
@@ -356,6 +410,105 @@ export default function OverviewPage() {
               </Link>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          Patterns: which strategy, and when
+        </h2>
+        <p className="mt-3 max-w-2xl leading-relaxed text-muted-foreground">
+          Start from the question &quot;what varies, and for whom?&quot; and the
+          right caching strategy usually falls out. Use this as a quick decision
+          guide.
+        </p>
+        <div className="mt-4 overflow-x-auto rounded-xl border border-border">
+          <table className="w-full border-collapse text-left text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/50">
+                <th className="px-4 py-3 font-medium text-muted-foreground">
+                  When
+                </th>
+                <th className="px-4 py-3 font-semibold text-foreground">
+                  Reach for
+                </th>
+                <th className="px-4 py-3 font-medium text-muted-foreground">
+                  Directive
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {strategyGuide.map((row) => (
+                <tr
+                  key={row.use}
+                  className="border-b border-border last:border-0"
+                >
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {row.when}
+                  </td>
+                  <td className="px-4 py-3">
+                    <Link
+                      href={row.href}
+                      className="font-medium text-primary underline-offset-4 hover:underline"
+                    >
+                      {row.use}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                    {row.directive}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          Composing &amp; nesting caches
+        </h2>
+        <p className="mt-3 max-w-2xl leading-relaxed text-muted-foreground">
+          The strategies stack. A page-level cache can embed a function- or
+          fetch-level cache, which raises three questions that trip people up.
+          The answers below are demonstrated live in the{' '}
+          <Link
+            href="/composition"
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
+            Composition
+          </Link>{' '}
+          example.
+        </p>
+        <div className="mt-5 flex flex-col gap-4">
+          {compositionQA.map((item, index) => (
+            <div
+              key={index}
+              className="rounded-xl border border-border bg-card p-5"
+            >
+              <h3 className="flex gap-3 font-medium text-card-foreground">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 font-mono text-xs font-semibold text-primary">
+                  Q{index + 1}
+                </span>
+                <span className="text-pretty">{item.q}</span>
+              </h3>
+              <p className="mt-3 pl-9 text-sm leading-relaxed text-muted-foreground">
+                {item.a}
+              </p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 rounded-xl border border-l-4 border-border border-l-cached bg-cached/5 p-5">
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            <span className="font-semibold text-foreground">
+              Rule of thumb:
+            </span>{' '}
+            tags bubble <span className="text-foreground">up</span> (invalidating
+            an inner tag regenerates everything that embeds it), and a cached
+            scope&apos;s output always includes its nested caches. So compose
+            freely — you cannot end up serving a stale outer cache wrapped around
+            freshly invalidated inner data.
+          </p>
         </div>
       </section>
 
