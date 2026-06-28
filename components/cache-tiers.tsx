@@ -57,7 +57,7 @@ export function CacheTiers({ tiers }: { tiers: TierMap }) {
           <span className="h-2.5 w-2.5 shrink-0 rounded-full border border-border bg-card" />
           <span>
             <dt className="inline font-semibold text-foreground">Used</dt>
-            <dd className="inline"> — involved in the flow (e.g. stores the entry) but not the hit.</dd>
+            <dd className="inline"> — holds a copy of the entry (e.g. stores or backs it up), but did not serve this request.</dd>
           </span>
         </div>
         <div className="flex items-center gap-2">
