@@ -108,6 +108,52 @@ const storage = [
   },
 ]
 
+const l2Storage = [
+  {
+    entry: 'Page-level / Dynamic ISR (whole-route prerenders)',
+    store: 'ISR store',
+    holds: 'The HTML shell + RSC payload for a route',
+  },
+  {
+    entry: 'Function-level / Fetch-level / Remote',
+    store: 'Runtime Cache (formerly Data Cache)',
+    holds: "Granular cached values from 'use cache' / cached fetch()",
+  },
+]
+
+const vercelCacheHeaders = [
+  { value: 'HIT', meaning: 'Served from cache (edge / L0)' },
+  {
+    value: 'STALE',
+    meaning: 'Served stale while revalidating in the background (the SWR path)',
+  },
+  { value: 'MISS', meaning: 'Not cached — generated on this request' },
+  { value: 'PRERENDER', meaning: 'Served from the build-time prerender' },
+]
+
+const observabilityTabs = [
+  {
+    tab: 'Runtime Cache',
+    detail:
+      "Hit rate, reads, writes, and storage usage for your 'use cache' / cached fetch entries. A selector toggles Runtime Cache vs the legacy Data Cache.",
+  },
+  {
+    tab: 'ISR',
+    detail:
+      'Revalidation patterns and hit ratios for prerendered routes — the page-level and Dynamic ISR demos land here.',
+  },
+  {
+    tab: 'Edge Requests',
+    detail:
+      'The CDN / L0 layer. Group by Cache Result to see HIT / MISS / STALE breakdowns.',
+  },
+  {
+    tab: 'Query interface',
+    detail:
+      'Build a custom report: pick Edge Requests or ISR operations and group by Cache Result for a precise HIT / MISS / STALE chart.',
+  },
+]
+
 const strategyGuide = [
   {
     when: 'A whole route is the same for everyone',
@@ -300,6 +346,121 @@ export default function OverviewPage() {
           what lets ISR entries survive a serverless function shutting down.
           Private never leaves the user&apos;s browser, so it is never shared or
           stored on the server.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          Where L2 lives on Vercel &amp; how to observe it
+        </h2>
+        <p className="mt-3 max-w-2xl leading-relaxed text-muted-foreground">
+          L2 is <span className="text-foreground">provided by default</span> — you
+          do not implement it to get caching. The logging cache handler in this
+          project only <em>wraps</em> the built-in store so the tier shows up in
+          the logs. On Vercel that durable store is not one system; it splits by
+          what kind of entry it is.
+        </p>
+        <div className="mt-4 overflow-x-auto rounded-xl border border-border">
+          <table className="w-full border-collapse text-left text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/50">
+                <th className="px-4 py-3 font-medium text-muted-foreground">
+                  Cached entry
+                </th>
+                <th className="px-4 py-3 font-semibold text-foreground">
+                  Vercel store
+                </th>
+                <th className="px-4 py-3 font-medium text-muted-foreground">
+                  Holds
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {l2Storage.map((row) => (
+                <tr
+                  key={row.store}
+                  className="border-b border-border last:border-0"
+                >
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {row.entry}
+                  </td>
+                  <td className="px-4 py-3 font-medium text-foreground">
+                    {row.store}
+                  </td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {row.holds}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          Note: Vercel renamed the{' '}
+          <span className="text-foreground">Data Cache → Runtime Cache</span>. You
+          may still see &quot;Data Cache&quot; in older docs and dashboards; for
+          Cache Components / <code className="font-mono">use cache</code> the
+          Runtime Cache is the relevant one. Both are regional and durable within
+          a deployment.
+        </p>
+
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-xl border border-border bg-card p-5">
+            <h3 className="font-medium text-card-foreground">
+              Fastest per-request check
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Open DevTools → Network on a deployed page and read the{' '}
+              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs text-foreground">
+                x-vercel-cache
+              </code>{' '}
+              response header:
+            </p>
+            <dl className="mt-3 flex flex-col gap-2">
+              {vercelCacheHeaders.map((h) => (
+                <div key={h.value} className="flex gap-3 text-sm">
+                  <dt>
+                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs font-semibold text-foreground">
+                      {h.value}
+                    </code>
+                  </dt>
+                  <dd className="text-muted-foreground">{h.meaning}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-5">
+            <h3 className="font-medium text-card-foreground">
+              Project → Observability dashboard
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              The platform-level view of the same activity your{' '}
+              <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs text-foreground">
+                [v0] cacheHandler
+              </code>{' '}
+              logs show:
+            </p>
+            <dl className="mt-3 flex flex-col gap-3">
+              {observabilityTabs.map((t) => (
+                <div key={t.tab}>
+                  <dt className="font-mono text-xs font-semibold text-card-foreground">
+                    {t.tab}
+                  </dt>
+                  <dd className="mt-0.5 text-sm leading-relaxed text-muted-foreground">
+                    {t.detail}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        </div>
+        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+          Reading the two side by side connects the dots: the{' '}
+          <span className="text-foreground">logs</span> are the application-level
+          view of the Runtime Cache, while{' '}
+          <span className="text-foreground">Observability</span> is the
+          platform-level view of the exact same reads, writes, and revalidations.
         </p>
       </section>
 
