@@ -32,6 +32,7 @@ function createLoggingHandler(label, maxSize = 50 * 1024 * 1024) {
       console.log(
         `[v0] cacheHandler:${label} — L2 ${entry ? 'HIT ' : 'MISS'} key=${shorten(cacheKey)} at ${now()}`,
       )
+      console.dir(entry, { depth: 1, colors: true })
       return entry
     },
 
@@ -39,6 +40,7 @@ function createLoggingHandler(label, maxSize = 50 * 1024 * 1024) {
       console.log(
         `[v0] cacheHandler:${label} — L2 WRITE key=${shorten(cacheKey)} at ${now()}`,
       )
+      console.dir(pendingEntry, { depth: 1, colors: true })
       return base.set(cacheKey, pendingEntry)
     },
 
