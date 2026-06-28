@@ -13,6 +13,12 @@ export const demoRoutes: DemoRoute[] = [
     blurb: 'Cache an entire route into the static shell at build time.',
   },
   {
+    href: '/dynamic-isr',
+    label: 'Dynamic ISR',
+    directive: "'use cache' + params",
+    blurb: 'Generate a route on first request, then cache it (ISR / fallback).',
+  },
+  {
     href: '/function-level',
     label: 'Function-level cache',
     directive: "'use cache'",

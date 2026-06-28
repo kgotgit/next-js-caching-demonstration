@@ -26,11 +26,11 @@ export function generateStaticParams() {
 async function getReadingFor(slug: string) {
   'use cache'
   cacheLife('minutes')
-  cacheTag(`page-level-${slug}`)
+  cacheTag(`dynamic-isr-${slug}`)
   console.log(
-    `[v0] page-level ISR '${slug}' — function BODY EXECUTED at ${new Date().toISOString()}`,
+    `[v0] dynamic-isr '${slug}' — function BODY EXECUTED at ${new Date().toISOString()}`,
   )
-  return expensiveWork(`Page-level ISR · ${slug}`, 700)
+  return expensiveWork(`Dynamic ISR · ${slug}`, 700)
 }
 
 // Everything slug-specific lives here, and this whole subtree is rendered INSIDE
@@ -52,7 +52,7 @@ async function SlugView({ params }: { params: Promise<{ slug: string }> }) {
           return (
             <Link
               key={s}
-              href={`/page-level/${s}`}
+              href={`/dynamic-isr/${s}`}
               className={
                 active
                   ? 'inline-flex items-center gap-2 rounded-full border border-primary bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground'
@@ -144,7 +144,7 @@ export default function PageLevelISRDemo({
           items={[
             'Only "alpha" is prebuilt. Visit "beta" or "gamma" to trigger on-demand generation.',
             'On the very first visit to a new slug you briefly see the streaming skeleton (the App Shell). After that the slug is cached.',
-            'Watch the server logs: a "[v0] page-level ISR" line prints the first time each slug is generated, then stays silent on refresh.',
+            'Watch the server logs: a "[v0] dynamic-isr" line prints the first time each slug is generated, then stays silent on refresh.',
           ]}
         />
       </DemoHeader>
@@ -161,7 +161,7 @@ export default function PageLevelISRDemo({
         </h2>
         <CodeBlock
           className="mt-4"
-          filename="app/page-level/[slug]/page.tsx"
+          filename="app/dynamic-isr/[slug]/page.tsx"
           code={`// Prebuild ONLY a subset. Unlisted slugs become ISR.
 export function generateStaticParams() {
   return [{ slug: 'alpha' }] // 'beta' / 'gamma' are generated on demand
@@ -181,7 +181,7 @@ async function SlugView({ params }) {
   return <ReadingCard reading={await getReadingFor(slug)} />
 }
 
-// The page itself never awaits params — it just forwards the promise.
+// The page itself never awaits params ��� it just forwards the promise.
 export default function Page({ params }) {
   return (
     <Suspense fallback={<Skeleton />}>
