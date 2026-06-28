@@ -45,6 +45,29 @@ export function CacheTiers({ tiers }: { tiers: TierMap }) {
       <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
         Lookup order is left to right — the first tier with a fresh entry wins.
       </p>
+      <dl className="mt-3 flex flex-col gap-1.5 text-xs leading-relaxed text-muted-foreground sm:flex-row sm:flex-wrap sm:gap-x-5">
+        <div className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full border border-cached bg-cached/30" />
+          <span>
+            <dt className="inline font-semibold text-foreground">Primary</dt>
+            <dd className="inline"> — the tier that actually serves the response.</dd>
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full border border-border bg-card" />
+          <span>
+            <dt className="inline font-semibold text-foreground">Used</dt>
+            <dd className="inline"> — involved in the flow (e.g. stores the entry) but not the hit.</dd>
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full border border-dashed border-border/60 bg-transparent" />
+          <span>
+            <dt className="inline font-semibold text-foreground">Not used</dt>
+            <dd className="inline"> — plays no role for this directive.</dd>
+          </span>
+        </div>
+      </dl>
       <ol className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {TIER_ORDER.map((id) => {
           const entry = tiers[id]
