@@ -3,6 +3,7 @@
 import { cacheLife } from 'next/cache'
 import { expensiveWork } from '@/lib/demo'
 import { DemoHeader, ObserveHint } from '@/components/demo-header'
+import { CacheTiers } from '@/components/cache-tiers'
 import { ReadingCard } from '@/components/reading-card'
 import { CodeBlock } from '@/components/code-block'
 import { ReloadButton } from '@/components/reload-button'
@@ -36,6 +37,22 @@ export default async function PageLevelDemo() {
         timing="Build time"
         storage="Static shell (prerendered HTML + RSC payload)"
       >
+        <CacheTiers
+          tiers={{
+            L0: {
+              status: 'primary',
+              note: 'Prerendered at build and served straight from the edge — the function is never invoked.',
+            },
+            L1: {
+              status: 'used',
+              note: 'Warms in instance memory if a function ever renders the route.',
+            },
+            L2: {
+              status: 'used',
+              note: 'Backed by the durable store across instances and restarts.',
+            },
+          }}
+        />
         <ObserveHint
           items={[
             'The timestamp and token below were captured once, when the page was prerendered.',

@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { cacheLife, cacheTag } from 'next/cache'
 import { expensiveWork, type Reading } from '@/lib/demo'
 import { DemoHeader, ObserveHint } from '@/components/demo-header'
+import { CacheTiers } from '@/components/cache-tiers'
 import { ReadingCard, ReadingCardSkeleton } from '@/components/reading-card'
 import { CodeBlock } from '@/components/code-block'
 import { ReloadButton } from '@/components/reload-button'
@@ -62,6 +63,26 @@ export default function PrivateDemo() {
         timing="Request time (excluded from the static shell)"
         storage="Browser memory only (per client)"
       >
+        <CacheTiers
+          tiers={{
+            L0: {
+              status: 'unused',
+              note: 'Personalized + cookie-reading, so it is excluded from the edge-served shell.',
+            },
+            L1: {
+              status: 'unused',
+              note: 'Never written to server memory — that would leak one user’s data to another.',
+            },
+            L2: {
+              status: 'unused',
+              note: "Private entries are never sent to the cacheHandler — you won't see cacheHandler logs here.",
+            },
+            private: {
+              status: 'primary',
+              note: "Stored only in this browser's memory; per-user and dropped on a hard reload.",
+            },
+          }}
+        />
         <ObserveHint
           items={[
             'The greeting reads the visitor cookie directly inside the cached function — only the private directive allows this.',

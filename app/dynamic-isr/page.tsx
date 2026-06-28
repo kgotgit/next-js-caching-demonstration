@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { DemoHeader, ObserveHint } from '@/components/demo-header'
+import { CacheTiers } from '@/components/cache-tiers'
 import { CodeBlock } from '@/components/code-block'
 
 // This landing page itself is fully static — it reads no runtime data, so it is
@@ -16,6 +17,22 @@ export default function DynamicIsrDemo() {
         timing="Build time (prebuilt slugs) + first request (the rest)"
         storage="Static App Shell + per-slug cache entry"
       >
+        <CacheTiers
+          tiers={{
+            L0: {
+              status: 'primary',
+              note: 'Prebuilt slugs and the generic App Shell are served from the edge.',
+            },
+            L1: {
+              status: 'used',
+              note: 'A freshly generated slug warms in memory for that instance.',
+            },
+            L2: {
+              status: 'primary',
+              note: 'On-demand slug entries persist in the durable store, so they survive teardown — watch cacheHandler:default WRITE on first visit.',
+            },
+          }}
+        />
         <ObserveHint
           items={[
             'Only "alpha" is prebuilt at build time. "beta" and "gamma" are generated on first visit, then cached.',

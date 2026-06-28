@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { connection } from 'next/server'
 import { cacheLife } from 'next/cache'
 import { DemoHeader, ObserveHint } from '@/components/demo-header'
+import { CacheTiers } from '@/components/cache-tiers'
 import { ReadingCardSkeleton } from '@/components/reading-card'
 import { CodeBlock } from '@/components/code-block'
 import { ReloadButton } from '@/components/reload-button'
@@ -136,6 +137,22 @@ export default function FetchLevelDemo() {
         timing="Build time + runtime (in-memory)"
         storage="In-memory LRU (keyed by the function + args)"
       >
+        <CacheTiers
+          tiers={{
+            L0: {
+              status: 'unused',
+              note: 'The live panel keeps the page dynamic, so it is not served whole from the edge.',
+            },
+            L1: {
+              status: 'primary',
+              note: 'The memoized fetch response lives in the in-memory LRU, keyed by the function + args.',
+            },
+            L2: {
+              status: 'used',
+              note: 'Persisted by the logging cacheHandler — a single cacheHandler:default WRITE protects the upstream API.',
+            },
+          }}
+        />
         <ObserveHint
           items={[
             'Both panels fetch the same endpoint, but only one is wrapped in use cache.',

@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { cacheLife, cacheTag } from 'next/cache'
 import { expensiveWork, type Reading } from '@/lib/demo'
 import { DemoHeader, ObserveHint } from '@/components/demo-header'
+import { CacheTiers } from '@/components/cache-tiers'
 import { ReadingCard, ReadingCardSkeleton } from '@/components/reading-card'
 import { CodeBlock } from '@/components/code-block'
 import { ReloadButton } from '@/components/reload-button'
@@ -87,6 +88,22 @@ export default function RemoteDemo() {
         timing="Request time"
         storage="Remote cache handler (shared across instances)"
       >
+        <CacheTiers
+          tiers={{
+            L0: {
+              status: 'unused',
+              note: 'Reading the currency cookie defers this to request time — never edge-served.',
+            },
+            L1: {
+              status: 'unused',
+              note: 'Remote caching deliberately bypasses per-instance memory so entries can be shared.',
+            },
+            L2: {
+              status: 'primary',
+              note: 'Stored in the shared remote handler, keyed by (product, currency) — watch the cacheHandler:remote lines.',
+            },
+          }}
+        />
         <ObserveHint
           items={[
             'The price is keyed by currency, not by user — everyone on USD shares one entry.',

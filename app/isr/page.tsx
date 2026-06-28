@@ -2,6 +2,7 @@ import { Suspense } from 'react'
 import { cacheLife, cacheTag, updateTag } from 'next/cache'
 import { expensiveWork } from '@/lib/demo'
 import { DemoHeader, ObserveHint } from '@/components/demo-header'
+import { CacheTiers } from '@/components/cache-tiers'
 import { ReadingCard, ReadingCardSkeleton } from '@/components/reading-card'
 import { LiveReading } from '@/components/live-reading'
 import { CodeBlock } from '@/components/code-block'
@@ -50,6 +51,22 @@ export default function IsrDemo() {
         timing="Build time, refreshed in the background at request time"
         storage="In-memory / cache handler (tagged entry)"
       >
+        <CacheTiers
+          tiers={{
+            L0: {
+              status: 'unused',
+              note: 'The live comparison panel keeps the route dynamic, so the whole page is not edge-served.',
+            },
+            L1: {
+              status: 'used',
+              note: 'The tagged entry warms in memory for the life of the instance.',
+            },
+            L2: {
+              status: 'primary',
+              note: 'The durable store holds the tagged entry; updateTag invalidates it — watch for cacheHandler:default INVALIDATE.',
+            },
+          }}
+        />
         <ObserveHint
           items={[
             'Refresh within 10s: the value is frozen (served from cache).',
