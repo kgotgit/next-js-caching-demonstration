@@ -2,7 +2,8 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import Link from 'next/link'
-import { SiteNav } from '@/components/site-nav'
+import { Suspense } from 'react'
+import { SiteNav, SiteNavFallback } from '@/components/site-nav'
 import './globals.css'
 
 const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
@@ -48,7 +49,13 @@ export default function RootLayout({
                   Cache Components
                 </span>
               </Link>
-              <SiteNav />
+              {/* usePathname() is runtime data. Wrapping the nav in Suspense
+                  lets Next.js prerender a static App Shell (with no item
+                  highlighted) for dynamic routes like /page-level/[slug], then
+                  stream the active state in on the client. */}
+              <Suspense fallback={<SiteNavFallback />}>
+                <SiteNav />
+              </Suspense>
             </div>
           </aside>
 

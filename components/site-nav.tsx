@@ -5,9 +5,10 @@ import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { demoRoutes } from '@/lib/routes'
 
-export function SiteNav() {
-  const pathname = usePathname()
-
+// Presentational nav. Takes the active pathname as a prop so it can be rendered
+// WITHOUT the usePathname() hook — used for the Suspense fallback (App Shell),
+// where the pathname isn't known yet.
+function NavLinks({ pathname }: { pathname: string }) {
   return (
     <nav className="flex flex-col gap-1" aria-label="Cache demos">
       <Link
@@ -55,4 +56,16 @@ export function SiteNav() {
       })}
     </nav>
   )
+}
+
+// Client component that reads the runtime pathname for active highlighting.
+export function SiteNav() {
+  const pathname = usePathname()
+  return <NavLinks pathname={pathname} />
+}
+
+// Static fallback shipped in the App Shell while usePathname() streams in. No
+// item is highlighted until the real pathname resolves on the client.
+export function SiteNavFallback() {
+  return <NavLinks pathname="" />
 }
