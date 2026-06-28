@@ -19,6 +19,11 @@ export default async function PageLevelDemo() {
   // Keep the prerendered output for ~1 day before revalidating.
   cacheLife('days')
 
+  // This line only prints when the page body actually runs (build time or a
+  // revalidation). If you refresh and see NO new log, the static shell was
+  // served straight from cache — a cache HIT.
+  console.log(`[v0] page-level 'use cache' — function BODY EXECUTED at ${new Date().toISOString()}`)
+
   const reading = await expensiveWork('Page-level use cache', 600)
 
   return (

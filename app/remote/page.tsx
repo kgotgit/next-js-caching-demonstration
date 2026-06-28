@@ -24,6 +24,10 @@ async function getProductPrice(
   cacheTag(`price-${productId}-${currency}`)
   cacheLife({ stale: 60, revalidate: 120, expire: 600 })
 
+  // Logs per (productId, currency) MISS. Switch currency to force a new key/log;
+  // switch back within the window and no new log = served from the remote cache.
+  console.log(`[v0] remote 'use cache: remote' — COMPUTED ${productId}/${currency} at ${new Date().toISOString()}`)
+
   const rates: Record<string, number> = { USD: 1, EUR: 0.92, GBP: 0.79 }
   const symbols: Record<string, string> = { USD: '$', EUR: '€', GBP: '£' }
   const value = (BASE_PRICE * (rates[currency] ?? 1)).toFixed(2)

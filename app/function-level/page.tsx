@@ -13,6 +13,9 @@ import { ReloadButton } from '@/components/reload-button'
 async function getCachedReading() {
   'use cache'
   cacheLife('minutes')
+  // Prints ONCE per cache window. Called twice per render but you'll see a
+  // single log on a MISS; refresh within the window and no new log = HIT.
+  console.log(`[v0] function-level 'use cache' — function BODY EXECUTED at ${new Date().toISOString()}`)
   return expensiveWork('Function-level use cache', 800)
 }
 

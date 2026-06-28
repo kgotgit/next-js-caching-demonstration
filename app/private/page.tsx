@@ -19,6 +19,11 @@ async function getGreeting(): Promise<{ visitor: string; reading: Reading }> {
   cacheLife({ stale: 60 })
   cacheTag('greeting')
 
+  // Note: because this is cached in the BROWSER, this server-side log fires on
+  // the initial render/MISS; soft navigations reuse the client entry (no log),
+  // while a hard reload re-runs it and logs again.
+  console.log(`[v0] private 'use cache: private' — function BODY EXECUTED at ${new Date().toISOString()}`)
+
   const visitor = (await cookies()).get('visitor')?.value ?? 'guest'
   const reading = await expensiveWork(`Private greeting · ${visitor}`, 600)
   return { visitor, reading }

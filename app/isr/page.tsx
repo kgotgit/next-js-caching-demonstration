@@ -16,6 +16,9 @@ async function getStat() {
   // refreshes in the background — the classic ISR pattern.
   cacheLife({ stale: 5, revalidate: 10, expire: 30 })
   cacheTag('isr-stat')
+  // Watch this in the logs: frozen within the window (no log), then a new log
+  // appears when it regenerates after the revalidate window or an updateTag.
+  console.log(`[v0] isr 'use cache' — REGENERATED at ${new Date().toISOString()}`)
   return expensiveWork('ISR cached stat', 500)
 }
 

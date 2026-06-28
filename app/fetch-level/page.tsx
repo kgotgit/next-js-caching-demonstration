@@ -23,6 +23,9 @@ type FetchResult = {
 async function getCachedPosts(): Promise<FetchResult> {
   'use cache'
   cacheLife('minutes')
+  // Only logs on a MISS (when the upstream fetch actually happens). No new log
+  // on refresh = the cached response was served without touching the network.
+  console.log(`[v0] fetch-level CACHED 'use cache' — UPSTREAM FETCH at ${new Date().toISOString()}`)
   return runFetch()
 }
 
@@ -30,6 +33,8 @@ async function getCachedPosts(): Promise<FetchResult> {
 // re-hits the network on every request.
 async function getLivePosts(): Promise<FetchResult> {
   await connection()
+  // Logs on EVERY request — there is no cache to skip the work.
+  console.log(`[v0] fetch-level LIVE (uncached) — UPSTREAM FETCH at ${new Date().toISOString()}`)
   return runFetch()
 }
 
